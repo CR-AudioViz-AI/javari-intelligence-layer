@@ -1,0 +1,13 @@
+{
+  "crons": [
+    {
+      "path": "/api/generate-embeddings",
+      "schedule": "0 2 * * *"
+    }
+  ],
+  "functions": {
+    "app/api/generate-embeddings/route.ts": {
+      "maxDuration": 300
+    }
+  }
+}
