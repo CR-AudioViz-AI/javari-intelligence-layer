@@ -172,7 +172,7 @@ No people in image.`;
       n: 1
     });
     
-    return image.data[0].url || '';
+    return image.data?.[0]?.url || '';
   } catch (error) {
     console.error('Mockup generation error:', error);
     // Fallback to placeholder
