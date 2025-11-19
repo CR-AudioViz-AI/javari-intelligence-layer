@@ -12,7 +12,7 @@ import { generateMissingEmbeddings, getEmbeddingStats } from '@/lib/embeddings';
 export const maxDuration = 300; // 5 minutes max execution time
 export const dynamic = 'force-dynamic';
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const body = await request.json().catch(() => ({}));
     const limit = body.limit || 1000;
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const stats = await getEmbeddingStats();
 
