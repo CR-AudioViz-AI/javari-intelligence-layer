@@ -116,7 +116,7 @@ async function checkTrademark(text: string): Promise<TrademarkCheck> {
       riskLevel: 'low'
     };
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('Trademark check error:', error);
     return {
       status: 'error',
@@ -174,7 +174,7 @@ async function checkCopyright(text: string): Promise<CopyrightCheck> {
       riskLevel: 'low'
     };
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('Copyright check error:', error);
     return {
       status: 'error',
@@ -364,7 +364,7 @@ async function saveCheckResults(
 // API ENDPOINTS
 // =====================================================
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const body: LegalCheckRequest = await request.json();
     
@@ -405,7 +405,7 @@ export async function POST(request: NextRequest) {
 // GET APPROVAL QUEUE
 // =====================================================
 
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get('status') || 'pending';
@@ -439,7 +439,7 @@ export async function GET(request: NextRequest) {
 // BULK CHECK ENDPOINT
 // =====================================================
 
-export async function PUT(request: NextRequest) {
+export async function PUT(request: NextRequest): Promise<NextResponse> {
   try {
     const body: { texts: string[]; checkType: string } = await request.json();
     
