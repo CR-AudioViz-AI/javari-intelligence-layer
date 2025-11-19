@@ -24,7 +24,7 @@ interface SearchRequest {
   conversationId?: string;
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   const startTime = Date.now();
 
   try {
@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
           queryId = queryData.id;
           console.log(`[API] Query tracked with ID: ${queryId}`);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('[API] Failed to track query:', error);
         // Don't fail the request if tracking fails
       }
@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET endpoint to retrieve similar past queries
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('query');
