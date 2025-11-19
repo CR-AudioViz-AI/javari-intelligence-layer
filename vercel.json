@@ -9,11 +9,16 @@
     {
       "path": "/api/cron/web-crawl",
       "schedule": "0 */4 * * *"
+    },
+    {
+      "path": "/api/cron/sync-documents",
+      "schedule": "*/15 * * * *"
     }
   ],
   "env": {
     "NEXT_PUBLIC_SUPABASE_URL": "@supabase_url",
     "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key",
-    "CRON_SECRET": "@cron_secret"
+    "CRON_SECRET": "@cron_secret",
+    "GITHUB_TOKEN": "@github_token"
   }
 }
