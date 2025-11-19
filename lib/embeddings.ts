@@ -145,7 +145,7 @@ export async function generateMissingEmbeddings(limit: number = 1000): Promise<{
         }
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('[Embeddings] Batch processing error:', error);
       failed += batch.length;
     }
