@@ -13,7 +13,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 // Use dynamic import for rss-parser (CommonJS module)
 let Parser: any;
 
-async function getRSSParser() {
+async function getRSSParser(): Promise<any> {
   if (!Parser) {
     const module = await import('rss-parser');
     Parser = module.default || module;
@@ -220,7 +220,7 @@ async function fetchFeed(source: FeedSource): Promise<number> {
     
     return items.length;
     
-  } catch (error) {
+  } catch (error: any) {
     console.error(`❌ Error fetching ${source.name}:`, error);
     return 0;
   }
@@ -230,7 +230,7 @@ async function fetchFeed(source: FeedSource): Promise<number> {
 // MAIN API HANDLER
 // =====================================================
 
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     console.log('🚀 Starting Feed Registry ingestion...');
     const startTime = Date.now();
@@ -294,7 +294,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET || 'your-secret-here';
   
