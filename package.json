@@ -1,31 +1,28 @@
 {
   "name": "javari-intelligence-layer",
-  "version": "2.0.0",
-  "description": "Javari AI Intelligence Layer with Merch Intelligence Engine",
+  "version": "1.0.0",
+  "description": "Javari AI autonomous learning and intelligence system",
+  "main": "index.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "deploy": "vercel --prod"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.38.4",
     "next": "14.0.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "@supabase/supabase-js": "^2.39.0",
-    "openai": "^4.20.1",
-    "rss-parser": "^3.13.0",
-    "recharts": "^2.10.3",
-    "lucide-react": "^0.292.0",
-    "framer-motion": "^10.18.0"
+    "node-fetch": "^3.3.2",
+    "cheerio": "^1.0.0-rc.12"
   },
   "devDependencies": {
-    "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "typescript": "^5",
-    "autoprefixer": "^10.0.1",
-    "postcss": "^8",
-    "tailwindcss": "^3.3.0"
+    "@types/node": "^20.10.0",
+    "@types/react": "^18.2.0",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=18.x"
   }
 }

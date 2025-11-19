@@ -1,17 +1,19 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "github": {
-    "autoAlias": false
-  },
+  "version": 2,
+  "name": "javari-intelligence-layer",
+  "framework": "nextjs",
+  "buildCommand": "next build",
+  "devCommand": "next dev",
+  "installCommand": "npm install",
   "crons": [
     {
-      "path": "/api/generate-embeddings",
-      "schedule": "0 2 * * *"
+      "path": "/api/cron/web-crawl",
+      "schedule": "0 */4 * * *"
     }
   ],
-  "functions": {
-    "app/api/generate-embeddings/route.ts": {
-      "maxDuration": 300
-    }
+  "env": {
+    "NEXT_PUBLIC_SUPABASE_URL": "@supabase_url",
+    "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key",
+    "CRON_SECRET": "@cron_secret"
   }
 }
