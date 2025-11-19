@@ -359,7 +359,7 @@ async function buildProductOptions(
 // MAIN API HANDLER
 // =====================================================
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const body: DescribeItRequest = await request.json();
     
@@ -424,7 +424,7 @@ export async function POST(request: NextRequest) {
 // GET USER'S PAST REQUESTS
 // =====================================================
 
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const searchParams = request.nextUrl.searchParams;
     const userId = searchParams.get('userId');
