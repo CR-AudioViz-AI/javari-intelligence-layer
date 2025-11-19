@@ -11,7 +11,7 @@ import { supabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
     const timeRange = searchParams.get('range') || '24h';
@@ -117,7 +117,7 @@ async function getMetricsOverTime(interval: string) {
       averageSatisfaction: satisfactionData,
       queryVolume: volumeByTime,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('[API] Error getting metrics over time:', error);
     return null;
   }
@@ -158,7 +158,7 @@ function groupQueryVolume(queries: any[], groupBy: 'hour' | 'day') {
 }
 
 // POST endpoint to update query feedback
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const body = await request.json();
     const { queryId, satisfaction, feedback, wasHelpful } = body;
