@@ -1,107 +1,59 @@
 /**
- * Javari AI - Phase 2 Intelligence Layer
- * Supabase Client Configuration
+ * CR AudioViz AI - Supabase Client
+ * =================================
+ * 
+ * Universal database client for CR AudioViz AI apps.
+ * For authentication, credits, and central services, use:
+ * 
+ *   import { CentralServices, CentralAuth, CentralCredits } from './central-services';
+ * 
+ * This client is for app-specific database operations only.
+ * Auth, payments, and credits should ALWAYS go through central services.
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+// Re-export admin utilities from central services
+export { isAdmin, shouldChargeCredits, ADMIN_EMAILS, CentralServices } from './central-services';
 
-if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error('Missing Supabase environment variables');
-}
+// Centralized Supabase configuration
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kteobfyferrukqeolofj.supabase.co';
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0ZW9iZnlmZXJydWtxZW9sb2ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxOTcyNjYsImV4cCI6MjA3NzU1NzI2Nn0.uy-jlF_z6qVb8qogsNyGDLHqT4HhmdRhLrW7zPv3qhY';
 
-// Service role client for server-side operations (bypasses RLS)
-export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
+// Standard client for general use
+export const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Browser client for auth (SSR-safe singleton pattern)
+let browserClient: SupabaseClient | null = null;
+
+export function createSupabaseBrowserClient(): SupabaseClient {
+  if (typeof window === 'undefined') {
+    // Server-side: return new client each time
+    return createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
-});
-
-// Database types
-export interface DocumentationPage {
-  id: string;
-  source_id: string;
-  url: string;
-  title: string;
-  content: string;
-  content_hash: string;
-  section?: string;
-  subsection?: string;
-  embedding?: number[];
-  embedding_model?: string;
-  embedding_generated_at?: string;
-  embedding_token_count?: number;
-  metadata?: Record<string, any>;
-  created_at: string;
-  updated_at: string;
-  last_scraped_at: string;
+  
+  // Client-side: return singleton
+  if (!browserClient) {
+    browserClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    });
+  }
+  return browserClient;
 }
 
-export interface UserQuery {
-  id: string;
-  query_text: string;
-  query_embedding?: number[];
-  query_intent?: 'how-to' | 'explanation' | 'reference' | 'troubleshooting' | 'comparison';
-  query_complexity?: 'simple' | 'moderate' | 'complex';
-  detected_topics?: string[];
-  detected_languages?: string[];
-  found_in_docs: boolean;
-  relevant_page_ids?: string[];
-  top_similarity_score?: number;
-  response_generated: boolean;
-  response_token_count?: number;
-  response_time_ms?: number;
-  user_satisfaction?: number;
-  user_feedback_text?: string;
-  was_helpful?: boolean;
-  session_id?: string;
-  user_id?: string;
-  conversation_id?: string;
-  created_at: string;
-  metadata?: Record<string, any>;
+// Server client for API routes
+export function createSupabaseServerClient(): SupabaseClient {
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceKey) {
+    console.warn('SUPABASE_SERVICE_ROLE_KEY not set, using anon key');
+    return createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+  return createClient(SUPABASE_URL, serviceKey);
 }
 
-export interface ContentGap {
-  id: string;
-  topic: string;
-  subtopics?: string[];
-  query_frequency: number;
-  first_detected_at: string;
-  last_detected_at: string;
-  example_queries?: string[];
-  failed_query_count: number;
-  avg_similarity_score?: number;
-  priority: 'low' | 'medium' | 'high' | 'critical';
-  estimated_users_affected?: number;
-  status: 'identified' | 'planned' | 'in_progress' | 'resolved';
-  resolution_plan?: string;
-  resolved_at?: string;
-  resolved_by_page_ids?: string[];
-  created_at: string;
-  updated_at: string;
-  metadata?: Record<string, any>;
-}
-
-export interface LearningMetric {
-  id: string;
-  metric_type: string;
-  metric_value: number;
-  source_id?: string;
-  page_id?: string;
-  recorded_at: string;
-  metadata?: Record<string, any>;
-}
-
-export interface SearchResult {
-  page_id: string;
-  title: string;
-  url: string;
-  content: string;
-  section?: string;
-  source_name: string;
-  similarity: number;
-  last_updated: string;
-}
+export { SUPABASE_URL, SUPABASE_ANON_KEY };
+export default supabase;
