@@ -14,10 +14,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a href="https://craudiovizai.com" style={{ display:'flex',alignItems:'center',
           gap:8,textDecoration:'none',color:'#fff',fontSize:13,fontWeight:600 }}>
           <span>🧠</span>
-          <span style={{ color:'#7c3aed' }}>Javari Intelligence</span>
+          <span style={{ color:'#1E3A5F' }}>Javari Intelligence</span>
           <span style={{ color:'#374151',fontSize:11,marginLeft:4 }}>· CR AudioViz AI · EIN 39-3646201</span>
         </a>
-        <a href="https://craudiovizai.com/auth/signup" style={{ background:'#7c3aed',
+        <a href="https://craudiovizai.com/auth/signup" style={{ background:'#1E3A5F',
           color:'#fff',borderRadius:6,padding:'4px 14px',fontSize:12,fontWeight:700,textDecoration:'none' }}>
           Sign Up →
         </a>
