@@ -5,6 +5,9 @@
   "buildCommand": "next build",
   "devCommand": "next dev",
   "installCommand": "npm install",
+  "github": {
+    "autoAlias": false
+  },
   "crons": [
     {
       "path": "/api/cron/web-crawl",
@@ -14,11 +17,5 @@
       "path": "/api/cron/sync-documents",
       "schedule": "*/15 * * * *"
     }
-  ],
-  "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "@supabase_url",
-    "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key",
-    "CRON_SECRET": "@cron_secret",
-    "GITHUB_TOKEN": "@github_token"
-  }
+  ]
 }
