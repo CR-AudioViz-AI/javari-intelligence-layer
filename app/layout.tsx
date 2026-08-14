@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic'
 export const metadata: Metadata = {
   title: 'Javari Intelligence | CR AudioViz AI — EIN 39-3646201',
   description: 'AI intelligence platform. CR AudioViz AI, EIN 39-3646201.'
+  openGraph: { title: 'Javari Intelligence | CR AudioViz AI — EIN 39-3646201', description: 'AI intelligence platform. CR AudioViz AI, EIN 39-3646201.', type: 'website' },
 }
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
