@@ -4,6 +4,9 @@ import type { Metadata } from 'next'
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = {
   metadataBase: new URL('https://intelligence.craudiovizai.com'),
+  // 2026-08-16: no canonical was declared, so any duplicate path —
+  // trailing slash, query string, preview host — competed with itself.
+  alternates: { canonical: '/' },
   icons: {
     icon: [{ url: '/favicon.png', sizes: '32x32' }, { url: '/icon-512.png', sizes: '512x512' }],
     apple: '/apple-touch-icon.png',
