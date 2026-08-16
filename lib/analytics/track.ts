@@ -138,7 +138,7 @@ export async function track(v: Visit): Promise<void> {
   // that had already resolved, and Edge killed the invocation before the write
   // landed — 44 apps deployed clean and logged nothing. Returning the promise is
   // what makes waitUntil able to hold the invocation open for it.
-  return fetch(`${url}/rest/v1/analytics_events`, {
+  await fetch(`${url}/rest/v1/analytics_events`, {
     method: "POST",
     headers: {
       apikey: key,
