@@ -9,13 +9,13 @@
 // silently includes AhrefsBot is a lie told to yourself.
 //
 // CR AudioViz AI, LLC · EIN 39-3646201
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, type NextFetchEvent } from 'next/server'
 import { track } from '@/lib/analytics/track'
 
-export function middleware(request: NextRequest): NextResponse {
+export function middleware(request: NextRequest, event: NextFetchEvent): NextResponse {
   const response = NextResponse.next()
   try {
-    void track({
+    event.waitUntil(track({
       path: request.nextUrl.pathname,
       method: request.method,
       userAgent: request.headers.get('user-agent') ?? '',
@@ -25,7 +25,7 @@ export function middleware(request: NextRequest): NextResponse {
       appId: request.nextUrl.hostname,
       sessionId: request.cookies.get('zsid')?.value ?? null,
       userId: null,
-    })
+    }))
   } catch {
     // Never let tracking break a request.
   }
@@ -35,5 +35,5 @@ export function middleware(request: NextRequest): NextResponse {
 export const config = {
   // Static assets are excluded: logging a favicon fetch as a visit inflates
   // every number that matters.
-  matcher: ['/((?!_next/static|_next/image|favicon\\.ico|.*\\.png|.*\\.jpg|.*\\.svg|.*\\.webp|.*\\.ico).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon\.ico|.*\.png|.*\.jpg|.*\.svg|.*\.webp|.*\.ico).*)'],
 }
