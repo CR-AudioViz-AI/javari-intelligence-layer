@@ -4,6 +4,12 @@
 // Purpose: Trademark, copyright, and defamation checking
 // =====================================================
 
+// 2026-08-19: repointed from approval_queue to content_flag_queue. Two domains
+// were sharing one name: approval_queue is a HUMAN-IN-THE-LOOP session queue
+// (session_id, approval_type, payload, response_note), while this is AUTOMATED
+// CONTENT FLAGGING (item_type, risk_level, flag_reasons, numeric priority).
+// Adding columns until both queries passed would have produced a table serving
+// neither.
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -327,7 +333,7 @@ async function saveCheckResults(
       flagReasons.push('defamation_risk');
     }
     
-    await supabase.from('approval_queue').insert({
+    await supabase.from('content_flag_queue').insert({
       item_type: request.checkType,
       item_id: request.sourceId,
       flag_reasons: flagReasons,
@@ -415,7 +421,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const status = searchParams.get('status') || 'pending';
     
     const { data: queue, error } = await supabase
-      .from('approval_queue')
+      .from('content_flag_queue')
       .select('*')
       .eq('status', status)
       .order('priority', { ascending: false })
