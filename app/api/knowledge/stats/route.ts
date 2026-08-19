@@ -4,6 +4,12 @@
 // Returns ACTUAL data from existing database tables
 // =====================================================
 
+// 2026-08-19: repointed from documentation_* to the tables that actually hold
+// this data. javari_knowledge has 584 rows with two embedding columns and
+// javari_knowledge_chunks has 311; documentation_pages and documentation_chunks
+// were never created. Creating them would have made a SECOND, EMPTY knowledge
+// store beside a populated one - Canonical Vector Memory was never missing its
+// storage, the code was pointing at a name nobody created.
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -19,7 +25,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     // Get total documentation pages
     const { count: totalPages, error: pagesError } = await supabase
-      .from('documentation_pages')
+      .from('javari_knowledge')
       .select('*', { count: 'exact', head: true });
 
     if (pagesError) {
@@ -28,7 +34,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     // Get total chunks
     const { count: totalChunks, error: chunksError } = await supabase
-      .from('documentation_chunks')
+      .from('javari_knowledge_chunks')
       .select('*', { count: 'exact', head: true });
 
     if (chunksError) {
@@ -37,7 +43,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     // Get pages with embeddings (indicates processed knowledge)
     const { count: totalEmbeddings, error: embeddingsError } = await supabase
-      .from('documentation_pages')
+      .from('javari_knowledge')
       .select('*', { count: 'exact', head: true })
       .not('embedding', 'is', null);
 
@@ -72,7 +78,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     // Count pages per source
     const { data: pagesWithSource, error: pagesSourceError } = await supabase
-      .from('documentation_pages')
+      .from('javari_knowledge')
       .select('source_id, created_at');
 
     const knowledgeDomains: any[] = [];
@@ -102,7 +108,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // If no sources table, create domains from pages
     if (knowledgeDomains.length === 0) {
       const { data: allPages } = await supabase
-        .from('documentation_pages')
+        .from('javari_knowledge')
         .select('title, created_at')
         .limit(1000);
 
@@ -130,7 +136,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     // Get recent learnings
     const { data: recentPages } = await supabase
-      .from('documentation_pages')
+      .from('javari_knowledge')
       .select('id, title, source_id, created_at')
       .order('created_at', { ascending: false })
       .limit(10);
@@ -161,7 +167,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     const { data: recentDocs } = await supabase
-      .from('documentation_pages')
+      .from('javari_knowledge')
       .select('created_at')
       .gte('created_at', thirtyDaysAgo.toISOString());
 

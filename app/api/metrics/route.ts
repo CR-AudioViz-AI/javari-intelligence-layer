@@ -6,6 +6,12 @@
  * Purpose: Retrieve all learning metrics for dashboard
  */
 
+// 2026-08-19: repointed from documentation_* to the tables that actually hold
+// this data. javari_knowledge has 584 rows with two embedding columns and
+// javari_knowledge_chunks has 311; documentation_pages and documentation_chunks
+// were never created. Creating them would have made a SECOND, EMPTY knowledge
+// store beside a populated one - Canonical Vector Memory was never missing its
+// storage, the code was pointing at a name nobody created.
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
@@ -37,10 +43,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       recentQueriesData,
     ] = await Promise.all([
       // Dashboard overview
-      supabase.from('learning_dashboard').select('*').single(),
+      supabase.from('javari_learning_events').select('*').single(),
       
       // Top content gaps
-      supabase.from('top_content_gaps').select('*').limit(10),
+      supabase.from('javari_knowledge_gaps').select('*').limit(10),
       
       // Query intent analysis
       supabase.from('query_intent_analysis').select('*'),

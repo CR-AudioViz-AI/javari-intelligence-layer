@@ -3,6 +3,12 @@
  * OpenAI Embedding Service
  */
 
+// 2026-08-19: repointed from documentation_* to the tables that actually hold
+// this data. javari_knowledge has 584 rows with two embedding columns and
+// javari_knowledge_chunks has 311; documentation_pages and documentation_chunks
+// were never created. Creating them would have made a SECOND, EMPTY knowledge
+// store beside a populated one - Canonical Vector Memory was never missing its
+// storage, the code was pointing at a name nobody created.
 import OpenAI from 'openai';
 import { supabase, type DocumentationPage } from './supabase';
 
@@ -76,7 +82,7 @@ export async function generateMissingEmbeddings(limit: number = 1000): Promise<{
   
   // Get pages without embeddings
   const { data: pages, error } = await supabase
-    .from('documentation_pages')
+    .from('javari_knowledge')
     .select('id, title, content')
     .is('embedding', null)
     .limit(limit);
@@ -122,7 +128,7 @@ export async function generateMissingEmbeddings(limit: number = 1000): Promise<{
       // Update in parallel (but limit concurrency)
       const updatePromises = updates.map(update => 
         supabase
-          .from('documentation_pages')
+          .from('javari_knowledge')
           .update({
             embedding: update.embedding,
             embedding_model: update.embedding_model,
@@ -176,7 +182,7 @@ export async function regenerateAllEmbeddings(): Promise<{
   
   // Clear existing embeddings
   await supabase
-    .from('documentation_pages')
+    .from('javari_knowledge')
     .update({ 
       embedding: null,
       embedding_generated_at: null,

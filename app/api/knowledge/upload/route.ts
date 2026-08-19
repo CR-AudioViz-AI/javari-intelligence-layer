@@ -4,6 +4,12 @@
 // Purpose: Manually feed Javari knowledge (files or text)
 // =====================================================
 
+// 2026-08-19: repointed from documentation_* to the tables that actually hold
+// this data. javari_knowledge has 584 rows with two embedding columns and
+// javari_knowledge_chunks has 311; documentation_pages and documentation_chunks
+// were never created. Creating them would have made a SECOND, EMPTY knowledge
+// store beside a populated one - Canonical Vector Memory was never missing its
+// storage, the code was pointing at a name nobody created.
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { generateEmbedding } from '@/lib/embeddings';
@@ -82,7 +88,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Insert main documentation page
     const { data: docPage, error: docError } = await supabase
-      .from('documentation_pages')
+      .from('javari_knowledge')
       .insert({
         title,
         content,
@@ -111,7 +117,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       // Update page with embedding
       await supabase
-        .from('documentation_pages')
+        .from('javari_knowledge')
         .update({ embedding: JSON.stringify(docEmbedding) })
         .eq('id', docPage.id);
         
@@ -133,7 +139,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
         // Insert chunk
         const { data: chunkData, error: chunkError } = await supabase
-          .from('documentation_chunks')
+          .from('javari_knowledge_chunks')
           .insert({
             page_id: docPage.id,
             content: chunk,
