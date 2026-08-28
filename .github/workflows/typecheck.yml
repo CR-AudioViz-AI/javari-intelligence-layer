@@ -38,8 +38,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-      - run: npm ci --no-audit --no-fund
+      # 2026-08-27: NO CACHE AND npm install, because THIS REPO HAS NO LOCKFILE.
+      # setup-node's cache:'npm' fails outright without one ("Dependencies lock
+      # file is not found"), and npm ci refuses for the same reason.
+      #
+      # Nine of the fifteen satellites have no package-lock.json at all. That is a
+      # bigger problem than the missing typecheck: every install resolves fresh,
+      # so two builds of the same commit can ship different dependency trees, and
+      # a compromised transitive package arrives silently.
+      #
+      # Committing a lockfile per repo is the real fix and is tracked separately.
+      # Until then this runs unpinned rather than not running.
+      - run: npm install --no-audit --no-fund
       # The PINNED binary. Bare `npx tsc` resolves TypeScript 6 rather than the
       # pinned v5 and fails on syntax these codebases rely on — that cost core
       # 38-54 minutes per CI run until it was found.
