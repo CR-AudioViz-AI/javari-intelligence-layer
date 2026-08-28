@@ -12,14 +12,15 @@
 // neither.
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { secretKey, supabaseUrl } from "@craudioviz/platform-sdk";
 
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
+const SUPABASE_URL = supabaseUrl();
+const supabaseKey = secretKey();
+const supabase = createClient(SUPABASE_URL, supabaseKey);
 
 // USPTO Trademark API
 const USPTO_API_URL = 'https://tsdr.uspto.gov/api';
