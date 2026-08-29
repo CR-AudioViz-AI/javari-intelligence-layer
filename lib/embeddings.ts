@@ -10,7 +10,10 @@
 // store beside a populated one - Canonical Vector Memory was never missing its
 // storage, the code was pointing at a name nobody created.
 import OpenAI from 'openai';
-import { supabase, type DocumentationPage } from './supabase';
+// 2026-08-27: dropped `type DocumentationPage` — lib/supabase.ts does not export
+// it, and this file never used it. Left behind by the 2026-08-19 repoint from
+// documentation_* to javari_knowledge, which the comment below records.
+import { supabase } from './supabase';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
