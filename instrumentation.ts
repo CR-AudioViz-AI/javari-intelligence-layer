@@ -1,16 +1,22 @@
-// instrumentation.ts
-// CR AudioViz AI — Server startup hook. Installs the vault env-shim so every
-// process.env.<SECRET> read across the platform returns the vault value.
-// Runs once per server instance (Next.js instrumentation). 2026-07-13
+/**
+ * instrumentation.ts
+ *
+ * 2026-08-30. Rewritten to Next's documented runtime-split pattern.
+ *
+ * The vault work moved to ./instrumentation-node. This file now contains no
+ * reference to it that the EDGE compilation can follow, which is the whole
+ * point: Next compiles instrumentation for both runtimes, and webpack resolves
+ * every import it can reach regardless of the runtime guard, because resolution
+ * precedes execution.
+ *
+ * CR AudioViz AI, LLC · EIN 39-3646201
+ */
+
 export async function register(): Promise<void> {
-  // Only in the Node.js server runtime (not edge, not browser).
-  if (process.env.NEXT_RUNTIME !== "nodejs") return;
-  try {
-    const { installEnvShim, warmEnvShim } = await import("@/lib/platform-secrets/env-shim");
-    installEnvShim();
-    await warmEnvShim();
-    console.log(JSON.stringify({ level: "INFO", event: "ENV_SHIM_READY" }));
-  } catch (e) {
-    console.warn(JSON.stringify({ level: "WARN", event: "ENV_SHIM_FAILED", message: e instanceof Error ? e.message : "unknown" }));
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    const { registerNode } = await import("./instrumentation-node");
+    await registerNode();
   }
+  // No edge branch. Nothing needs to run there, and adding an empty one would
+  // only invite someone to fill it with something that does not belong.
 }
