@@ -1,22 +1,13 @@
 /**
- * instrumentation.ts
+ * instrumentation.ts — ISOLATION TEST 2, temporary.
  *
- * 2026-08-30. Rewritten to Next's documented runtime-split pattern.
+ * register() is deliberately a no-op. See the commit message: track() removal did
+ * not change the 500, app/layout.tsx is ruled out because /api/metrics also 500s
+ * and API routes do not render the layout, and static assets 404 correctly while
+ * a nonexistent path 500s.
  *
- * The vault work moved to ./instrumentation-node. This file now contains no
- * reference to it that the EDGE compilation can follow, which is the whole
- * point: Next compiles instrumentation for both runtimes, and webpack resolves
- * every import it can reach regardless of the runtime guard, because resolution
- * precedes execution.
- *
- * CR AudioViz AI, LLC · EIN 39-3646201
+ * This is the last thing that runs before every request on both runtimes.
  */
-
 export async function register(): Promise<void> {
-  if (process.env.NEXT_RUNTIME === "nodejs") {
-    const { registerNode } = await import("./instrumentation-node");
-    await registerNode();
-  }
-  // No edge branch. Nothing needs to run there, and adding an empty one would
-  // only invite someone to fill it with something that does not belong.
+  // no-op for this test only
 }
