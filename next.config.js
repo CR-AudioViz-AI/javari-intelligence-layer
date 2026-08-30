@@ -37,45 +37,48 @@ const nextConfig = {
 };
 
 
-// 2026-08-30, FOURTH PASS — and this one addresses the cause rather than the
-// symptom.
+// 2026-08-30, FIFTH PASS. Three approaches tried, each failing differently, and
+// the differences are what identify the right tool.
 //
-// THE PROBLEM: Next 15 compiles instrumentation.ts for the EDGE runtime as well
-// as node. Webpack resolves every import it finds there, and the runtime guard
-// inside register() cannot help, because the guard runs AFTER resolution:
+// THE PROBLEM: Next 15 compiles instrumentation.ts for the EDGE runtime. Webpack
+// resolves every import it finds there, and the runtime guard inside register()
+// cannot help because the guard runs AFTER resolution:
 //
 //   instrumentation.ts -> platform-secrets/env-shim -> getSecret
 //                      -> vault/getSecret -> platform-secrets/crypto
 //                      -> import { createCipheriv, ... } from "crypto"
 //
-// WHAT WAS TRIED AND WHY IT FAILED:
+//   1. resolve.fallback = { crypto: false }
+//      Build passed, EVERY REQUEST 500'd in production. Too broad: it targets the
+//      identifier `crypto` across the whole edge compilation, and middleware.ts
+//      here calls crypto.subtle.digest — WEB Crypto, the edge global. track.ts
+//      says so itself: "Web Crypto, not node:crypto. This runs in Edge middleware."
 //
-//   resolve.fallback = { crypto: false }
-//     Build passed. EVERY REQUEST RETURNED 500 in production, verified against
-//     the pre-upgrade build serving 200 at its own URL. It is too broad: it
-//     targets the identifier `crypto` across the whole edge compilation, and
-//     middleware.ts on this app calls crypto.subtle.digest — WEB Crypto, the edge
-//     global. track.ts says so in its own comment: "Web Crypto, not node:crypto.
-//     This runs in Edge middleware."
+//   2. removing it entirely
+//      Build failed on the import above.
 //
-//   removing it entirely
-//     Build failed outright on the import above.
+//   3. resolve.alias['@/lib/platform-secrets/env-shim'] = false
+//      Build failed with the IDENTICAL import trace — the alias never matched.
+//      Webpack aliases are compared after tsconfig path mapping, so the '@/' form
+//      is not what it sees.
 //
-// THE FIX: alias the vault ENTRY POINT to an empty module for the edge build
-// only. Webpack replaces env-shim with nothing and never follows it to crypto, so
-// the chain is cut at its head rather than patched at its tail. Nothing else in
-// the edge bundle is touched — the Web Crypto global is untouched, because this
-// aliases a MODULE PATH and not an identifier.
+// THE TOOL THAT FITS: IgnorePlugin with BOTH a resourceRegExp and a contextRegExp.
+// It ignores the request `crypto` only when the importer sits under
+// platform-secrets — the node crypto import in the vault is cut, and nothing else
+// named crypto anywhere in the edge bundle is affected. That is the precision the
+// first attempt lacked, and it is why the Web Crypto global survives.
 //
-// Safe because instrumentation.ts already returns early off nodejs, so the empty
-// module is never executed on edge. It was only ever being COMPILED there.
-const _edgeVaultOff = (config, { nextRuntime }) => {
+// Safe because instrumentation.ts returns early off nodejs, so the vault is never
+// executed on edge. It was only ever COMPILED there, which was the whole problem.
+const _edgeVaultOff = (config, { nextRuntime, webpack }) => {
   if (nextRuntime === "edge") {
-    config.resolve = config.resolve || {};
-    config.resolve.alias = {
-      ...(config.resolve.alias || {}),
-      "@/lib/platform-secrets/env-shim": false,
-    };
+    config.plugins = config.plugins || [];
+    config.plugins.push(
+      new webpack.IgnorePlugin({
+        resourceRegExp: /^crypto$/,
+        contextRegExp: /platform-secrets|lib[\\/]vault/,
+      }),
+    );
   }
   return config;
 };
