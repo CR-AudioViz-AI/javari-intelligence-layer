@@ -37,29 +37,41 @@ const nextConfig = {
 };
 
 
-// 2026-08-30, SECOND PASS: THE EDGE CRYPTO FALLBACK IS REMOVED HERE, AND THIS
-// REPO IS WHY THE PATTERN NEEDS A CONDITION.
+// 2026-08-30, THIRD PASS. The fallback is RESTORED, and this comment is the
+// handover, because neither state of this file is shippable yet.
 //
-// Applying `resolve.fallback = { crypto: false }` to the edge compilation made
-// the build pass and made EVERY REQUEST RETURN 500. Verified against production:
-// the pre-upgrade 08-16 build serves 200 at its own URL, the Next 15 build served
-// 500, same app, same domain, only the framework differing. Rolled back to the
-// 08-16 deployment; intelligence.craudiovizai.com is 200 again.
+//   WITH the fallback:     build passes, every request returns 500.
+//   WITHOUT the fallback:  build fails outright —
+//     ./lib/platform-secrets/crypto.ts:15  Module not found: Can't resolve 'crypto'
+//     import trace: instrumentation.ts -> env-shim -> getSecret -> vault/getSecret
 //
-// The cause: middleware.ts runs on the EDGE runtime and calls track(), which does
-//   const buf = await crypto.subtle.digest("SHA-256", data);
-// That is WEB CRYPTO — the edge global — and track.ts says so in its own comment:
-// "Web Crypto, not node:crypto. This runs in Edge middleware."
+// So the fallback is REQUIRED for the build and is not, on its own, the fix.
 //
-// The fallback exists to stop a NODE crypto IMPORT being dragged into an edge
-// bundle. It also takes out the Web Crypto GLOBAL that edge middleware legitimately
-// depends on. Build green, runtime dead.
+// WHAT IS PROVEN: the pre-upgrade 08-16 build serves 200 at its own URL and the
+// Next 15 build served 500 — same app, same domain, only the framework differing.
+// Production has been rolled back to that 08-16 deployment and is serving 200.
 //
-// This repo does not need it: instrumentation.ts has no top-level imports and
-// resolves the vault behind `if (NEXT_RUNTIME !== "nodejs") return;`, so nothing
-// pulls node crypto into the edge compilation in the first place.
+// WHAT IS NOT PROVEN: I attributed the 500 to this fallback removing the Web
+// Crypto global that middleware needs — track.ts calls crypto.subtle.digest and
+// its own comment says "Web Crypto, not node:crypto. This runs in Edge
+// middleware." That is a PLAUSIBLE mechanism and I did not confirm it against a
+// runtime log. Recorded as a hypothesis, not a finding.
 //
-// THE RULE, for the other twelve: apply the fallback ONLY where the edge build
-// actually fails without it, and NEVER where middleware uses Web Crypto. A green
-// build is not evidence — this one proved that at the cost of a live 500.
-module.exports = nextConfig;
+// THE ACTUAL FIX is to stop instrumentation.ts dragging the vault into the edge
+// compilation at all, rather than papering over the import once it is there. Next
+// 15 compiles instrumentation for both runtimes and webpack resolves every import
+// it finds, so the runtime guard inside register() does not help. Core hit the
+// identical chain installing Sentry and solved it by removing the webpack plugin;
+// that option does not exist here, because it is Next itself doing the compiling.
+//
+// DO NOT PROMOTE THIS REPO until that is resolved and a deployed build is verified
+// serving 200. A green build is not evidence — this cost a live 500 to establish.
+const _edgeCryptoOff = (config, { nextRuntime }) => {
+  if (nextRuntime === "edge") {
+    config.resolve = config.resolve || {};
+    config.resolve.fallback = { ...(config.resolve.fallback || {}), crypto: false };
+  }
+  return config;
+};
+
+module.exports = { ...nextConfig, webpack: _edgeCryptoOff };
