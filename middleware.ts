@@ -10,22 +10,18 @@
 //
 // CR AudioViz AI, LLC · EIN 39-3646201
 import { NextRequest, NextResponse, type NextFetchEvent } from 'next/server'
-import { track } from '@/lib/analytics/track'
+// 2026-08-30 ISOLATION TEST — track() temporarily removed.
+// A nonexistent path returns 500 while /_next/static returns 404, and static is
+// the one thing this matcher excludes. That puts the failure BEFORE routing,
+// which means middleware. track() is the only thing middleware imports, and it
+// pulls @craudioviz/platform-sdk into the EDGE bundle.
+// If this build serves 200, the SDK on edge is the cause and the fix is to move
+// analytics off the edge path rather than to keep patching the bundler.
 
 export function middleware(request: NextRequest, event: NextFetchEvent): NextResponse {
   const response = NextResponse.next()
   try {
-    event.waitUntil(track({
-      path: request.nextUrl.pathname,
-      method: request.method,
-      userAgent: request.headers.get('user-agent') ?? '',
-      referrer: request.headers.get('referer'),
-      ip: (request.headers.get('x-forwarded-for') ?? '').split(',')[0].trim() || null,
-      country: request.headers.get('x-vercel-ip-country'),
-      appId: request.nextUrl.hostname,
-      sessionId: request.cookies.get('zsid')?.value ?? null,
-      userId: null,
-    }))
+      // track(...) removed for this test only.
   } catch {
     // Never let tracking break a request.
   }
