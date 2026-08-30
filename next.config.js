@@ -37,48 +37,26 @@ const nextConfig = {
 };
 
 
-// 2026-08-30 — STATE OF THIS FILE, and it is not finished. Read this before
-// touching it.
+// 2026-08-30, RESOLVED. No webpack override here, deliberately.
 //
-// THREE CONFIG-LEVEL ATTEMPTS, all measured, none sufficient:
+// The vault no longer reaches the edge compilation, because instrumentation.ts
+// now follows Next's documented runtime-split pattern: the Node-only work lives
+// in ./instrumentation-node and is imported inside the NEXT_RUNTIME guard. A
+// dedicated file is a chunk boundary; the shared lib module it replaced was a
+// static edge in webpack's graph that resolution followed regardless of the
+// guard.
 //
-//   1. resolve.fallback { crypto: false } for edge
-//      Build PASSED. Every request returned 500.
-//   2. Removing it
-//      Build FAILED: ./lib/platform-secrets/crypto.ts Can't resolve 'crypto'.
-//   3. resolve.alias { "@/lib/vault/getSecret": false } for edge
-//      Build FAILED IDENTICALLY. The import trace resolves to
-//      ./lib/vault/getSecret.ts — tsconfig paths expand the @/ alias before
-//      webpack's resolve.alias is consulted, so the key never matches.
+// THREE WEBPACK ATTEMPTS PRECEDED THIS AND ALL WERE WRONG IN PRINCIPLE:
+//   resolve.fallback { crypto: false }  build passed, EVERY REQUEST 500'd — it
+//     also removes the Web Crypto GLOBAL that this app's edge middleware uses
+//     for crypto.subtle.digest. resolve.fallback cannot tell an import from a
+//     global.
+//   removing it                          build failed on the vault's crypto.
+//   resolve.alias on "@/lib/vault/..."   never matched; tsconfig paths expand
+//     the @/ prefix before webpack's alias is consulted.
 //
-// WHY (1) BREAKS THE RUNTIME, proven by comparison rather than assumed:
-// javari-social carries the identical fallback and serves 200 — it has NO
-// middleware, NO instrumentation and nothing touching crypto, so it never
-// exercised the fallback and its green result proved nothing. THIS repo has all
-// three: middleware runs on EDGE and calls track(), which calls
-// crypto.subtle.digest. track.ts says it outright — "Web Crypto, not node:crypto.
-// This runs in Edge middleware." resolve.fallback cannot distinguish a node IMPORT
-// from the Web Crypto GLOBAL, so it removes both.
-//
-// THE FIX IS IN THE SOURCE, NOT HERE. lib/platform-secrets/getSecret.ts statically
-// imports @/lib/vault/getSecret, which statically imports crypto. Next 15 compiles
-// instrumentation.ts for the edge runtime and webpack follows that static chain
-// regardless of the nodejs guard inside register(), because resolution happens
-// before execution. No bundler configuration fixes a static import chain; the chain
-// has to stop existing.
-//
-// The vault import must become lazy inside the function that uses it, so the edge
-// compilation never has a reason to resolve crypto at all. That is a change to how
-// every app boots and belongs in a deliberate pass, not appended to this one.
-//
-// FALLBACK RESTORED so main builds. PRODUCTION IS ON THE ROLLED-BACK 08-16
-// DEPLOYMENT AND SERVING 200. DO NOT PROMOTE THIS REPO.
-const _edgeCryptoOff = (config, { nextRuntime }) => {
-  if (nextRuntime === "edge") {
-    config.resolve = config.resolve || {};
-    config.resolve.fallback = { ...(config.resolve.fallback || {}), crypto: false };
-  }
-  return config;
-};
-
-module.exports = { ...nextConfig, webpack: _edgeCryptoOff };
+// No bundler configuration fixes a static import chain. The chain had to stop
+// existing, and Next's own documentation says exactly that: register() is called
+// in every environment, so runtime-specific code must be conditionally imported
+// from a dedicated file.
+module.exports = nextConfig;
