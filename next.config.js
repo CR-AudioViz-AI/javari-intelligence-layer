@@ -37,18 +37,29 @@ const nextConfig = {
 };
 
 
-// 2026-08-30: Next 15 compiles instrumentation.ts for the EDGE runtime as well
-// as node, so the vault env-shim's `crypto` import is pulled into an edge
-// bundle even though register() returns early off nodejs. Marking it
-// unavailable for the edge compilation is what stops it. The import must stay
-// a BARE `crypto` specifier: webpack rejects the `node:` scheme before
-// resolve.fallback is ever consulted, so `node:crypto` fails here too.
-const _edgeCryptoOff = (config, { nextRuntime }) => {
-  if (nextRuntime === "edge") {
-    config.resolve = config.resolve || {};
-    config.resolve.fallback = { ...(config.resolve.fallback || {}), crypto: false };
-  }
-  return config;
-};
-
-module.exports = { ...nextConfig, webpack: _edgeCryptoOff };
+// 2026-08-30, SECOND PASS: THE EDGE CRYPTO FALLBACK IS REMOVED HERE, AND THIS
+// REPO IS WHY THE PATTERN NEEDS A CONDITION.
+//
+// Applying `resolve.fallback = { crypto: false }` to the edge compilation made
+// the build pass and made EVERY REQUEST RETURN 500. Verified against production:
+// the pre-upgrade 08-16 build serves 200 at its own URL, the Next 15 build served
+// 500, same app, same domain, only the framework differing. Rolled back to the
+// 08-16 deployment; intelligence.craudiovizai.com is 200 again.
+//
+// The cause: middleware.ts runs on the EDGE runtime and calls track(), which does
+//   const buf = await crypto.subtle.digest("SHA-256", data);
+// That is WEB CRYPTO — the edge global — and track.ts says so in its own comment:
+// "Web Crypto, not node:crypto. This runs in Edge middleware."
+//
+// The fallback exists to stop a NODE crypto IMPORT being dragged into an edge
+// bundle. It also takes out the Web Crypto GLOBAL that edge middleware legitimately
+// depends on. Build green, runtime dead.
+//
+// This repo does not need it: instrumentation.ts has no top-level imports and
+// resolves the vault behind `if (NEXT_RUNTIME !== "nodejs") return;`, so nothing
+// pulls node crypto into the edge compilation in the first place.
+//
+// THE RULE, for the other twelve: apply the fallback ONLY where the edge build
+// actually fails without it, and NEVER where middleware uses Web Crypto. A green
+// build is not evidence — this one proved that at the cost of a live 500.
+module.exports = nextConfig;
