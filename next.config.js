@@ -37,42 +37,48 @@ const nextConfig = {
 };
 
 
-// 2026-08-30, FOURTH PASS — and this one is targeted rather than blanket.
+// 2026-08-30 — STATE OF THIS FILE, and it is not finished. Read this before
+// touching it.
 //
-// THE HISTORY, because both earlier attempts were wrong in instructive ways:
+// THREE CONFIG-LEVEL ATTEMPTS, all measured, none sufficient:
 //
-//   resolve.fallback { crypto: false } for edge
-//     build PASSED, every request returned 500.
-//   removing it
-//     build FAILED — ./lib/platform-secrets/crypto.ts: Can't resolve 'crypto',
-//     via instrumentation.ts -> env-shim -> getSecret -> vault/getSecret.
+//   1. resolve.fallback { crypto: false } for edge
+//      Build PASSED. Every request returned 500.
+//   2. Removing it
+//      Build FAILED: ./lib/platform-secrets/crypto.ts Can't resolve 'crypto'.
+//   3. resolve.alias { "@/lib/vault/getSecret": false } for edge
+//      Build FAILED IDENTICALLY. The import trace resolves to
+//      ./lib/vault/getSecret.ts — tsconfig paths expand the @/ alias before
+//      webpack's resolve.alias is consulted, so the key never matches.
 //
-// PROVEN BY COMPARISON, not assumed. javari-social carries the identical fallback
-// and serves 200 — because it has NO middleware, NO instrumentation and nothing
-// touching crypto. It never exercised the fallback. This repo has all three: its
-// middleware runs on EDGE and calls track(), which calls
-// crypto.subtle.digest("SHA-256", data). track.ts says so itself: "Web Crypto, not
-// node:crypto. This runs in Edge middleware."
+// WHY (1) BREAKS THE RUNTIME, proven by comparison rather than assumed:
+// javari-social carries the identical fallback and serves 200 — it has NO
+// middleware, NO instrumentation and nothing touching crypto, so it never
+// exercised the fallback and its green result proved nothing. THIS repo has all
+// three: middleware runs on EDGE and calls track(), which calls
+// crypto.subtle.digest. track.ts says it outright — "Web Crypto, not node:crypto.
+// This runs in Edge middleware." resolve.fallback cannot distinguish a node IMPORT
+// from the Web Crypto GLOBAL, so it removes both.
 //
-// So `crypto: false` did exactly what it says — and resolve.fallback cannot tell a
-// node IMPORT from the Web Crypto GLOBAL. It removed both.
+// THE FIX IS IN THE SOURCE, NOT HERE. lib/platform-secrets/getSecret.ts statically
+// imports @/lib/vault/getSecret, which statically imports crypto. Next 15 compiles
+// instrumentation.ts for the edge runtime and webpack follows that static chain
+// regardless of the nodejs guard inside register(), because resolution happens
+// before execution. No bundler configuration fixes a static import chain; the chain
+// has to stop existing.
 //
-// THE FIX: stub the VAULT MODULE for edge instead of the crypto builtin. The vault
-// is the only thing dragging node crypto into the edge bundle, instrumentation
-// already returns early off nodejs so edge never calls it, and the global is left
-// completely alone — middleware keeps its Web Crypto.
-const _edgeVaultStub = (config, { nextRuntime }) => {
+// The vault import must become lazy inside the function that uses it, so the edge
+// compilation never has a reason to resolve crypto at all. That is a change to how
+// every app boots and belongs in a deliberate pass, not appended to this one.
+//
+// FALLBACK RESTORED so main builds. PRODUCTION IS ON THE ROLLED-BACK 08-16
+// DEPLOYMENT AND SERVING 200. DO NOT PROMOTE THIS REPO.
+const _edgeCryptoOff = (config, { nextRuntime }) => {
   if (nextRuntime === "edge") {
     config.resolve = config.resolve || {};
-    config.resolve.alias = {
-      ...(config.resolve.alias || {}),
-      // false makes webpack resolve this to an empty module for the edge
-      // compilation only. Nothing on edge reaches it: instrumentation's register()
-      // returns before touching the vault unless NEXT_RUNTIME is nodejs.
-      "@/lib/vault/getSecret": false,
-    };
+    config.resolve.fallback = { ...(config.resolve.fallback || {}), crypto: false };
   }
   return config;
 };
 
-module.exports = { ...nextConfig, webpack: _edgeVaultStub };
+module.exports = { ...nextConfig, webpack: _edgeCryptoOff };
