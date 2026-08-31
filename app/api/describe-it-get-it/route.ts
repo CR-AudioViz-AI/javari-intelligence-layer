@@ -18,9 +18,20 @@ const SUPABASE_URL = supabaseUrl();
 const supabaseKey = secretKey();
 const supabase = createClient(SUPABASE_URL, supabaseKey);
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!
-});
+// 2026-08-31: LAZY, not module scope.
+//
+// `const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })` at the top of
+// a route runs during `next build`, when Next collects page data — so the build
+// needs a live credential. That is why this repo failed to build the moment
+// OPENAI_API_KEY was removed from Vercel, even though the vault serves it correctly
+// at runtime: THE VAULT CANNOT SERVE A BUILD.
+//
+// Same defect class as the seven "supabaseUrl is required" build failures found
+// across the fleet. Constructing inside the handler means the key is read when a
+// request arrives, by which point hydration has run.
+function getOpenAI(): OpenAI {
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+}
 
 interface DescribeItRequest {
   description: string;
@@ -64,7 +75,7 @@ interface ProductOption {
 // =====================================================
 
 async function parseDescription(description: string): Promise<ParsedRequest> {
-  const completion = await openai.chat.completions.create({
+  const completion = await getOpenAI().chat.completions.create({
     model: 'gpt-4',
     messages: [
       {
@@ -169,7 +180,7 @@ Background: white studio background.
 No people in image.`;
   
   try {
-    const image = await openai.images.generate({
+    const image = await getOpenAI().images.generate({
       model: 'dall-e-3',
       prompt,
       size: '1024x1024',
