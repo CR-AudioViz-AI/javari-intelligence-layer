@@ -15,9 +15,26 @@ import OpenAI from 'openai';
 // documentation_* to javari_knowledge, which the comment below records.
 import { supabase } from './supabase';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
+// 2026-08-31: LAZY, not module scope.
+//
+// This is a LIB file, not a route, and that is exactly why it was missed twice. A
+// client constructed here runs whenever ANY route importing this module is
+// evaluated — including during `next build`, when Next collects page data. So the
+// build required a live OPENAI_API_KEY and failed the moment the key left Vercel,
+// reporting /api/analyze-query rather than the file actually responsible.
+//
+// The vault cannot serve a build. Constructing on first use means the key is read
+// when a request arrives, by which point hydration has run.
+//
+// Cached after first construction: this is called per embedding, and rebuilding the
+// client on every call would trade a build failure for a runtime cost.
+let _openai: OpenAI | null = null;
+function getOpenAI(): OpenAI {
+  if (!_openai) {
+    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+  return _openai;
+}
 
 const EMBEDDING_MODEL = 'text-embedding-3-small';
 const BATCH_SIZE = 100; // Process 100 pages at a time
@@ -32,7 +49,7 @@ export async function generateEmbedding(text: string): Promise<{
 }> {
   const truncatedText = truncateText(text, MAX_TOKENS);
   
-  const response = await openai.embeddings.create({
+  const response = await getOpenAI().embeddings.create({
     model: EMBEDDING_MODEL,
     input: truncatedText,
   });
@@ -57,7 +74,7 @@ export async function generateEmbeddingsBatch(texts: string[]): Promise<Array<{
     const batch = texts.slice(i, i + BATCH_SIZE);
     const truncatedBatch = batch.map(text => truncateText(text, MAX_TOKENS));
     
-    const response = await openai.embeddings.create({
+    const response = await getOpenAI().embeddings.create({
       model: EMBEDDING_MODEL,
       input: truncatedBatch,
     });
