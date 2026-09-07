@@ -230,7 +230,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     console.error('Knowledge stats error:', error);
     return NextResponse.json({
       success: false,
-      error: error.message,
+      error: 'The request could not be completed.', code: 'INTERNAL_ERROR',
       stats: {
         total_documents: 0,
         total_chunks: 0,
