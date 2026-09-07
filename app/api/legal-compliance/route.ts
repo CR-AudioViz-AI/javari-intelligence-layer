@@ -407,7 +407,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     console.error('Legal check error:', error);
     return NextResponse.json({ 
       success: false, 
-      error: error.message 
+      error: 'The request could not be completed.', code: 'INTERNAL_ERROR' 
     }, { status: 500 });
   }
 }
@@ -441,7 +441,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     console.error('Get approval queue error:', error);
     return NextResponse.json({ 
       success: false, 
-      error: error.message 
+      error: 'The request could not be completed.', code: 'INTERNAL_ERROR' 
     }, { status: 500 });
   }
 }
@@ -487,7 +487,7 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
     console.error('Bulk check error:', error);
     return NextResponse.json({ 
       success: false, 
-      error: error.message 
+      error: 'The request could not be completed.', code: 'INTERNAL_ERROR' 
     }, { status: 500 });
   }
 }
