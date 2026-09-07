@@ -471,7 +471,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     console.error('Describe It, Get It error:', error);
     return NextResponse.json({ 
       success: false, 
-      error: error.message 
+      error: 'The request could not be completed.', code: 'INTERNAL_ERROR' 
     }, { status: 500 });
   }
 }
@@ -514,7 +514,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     console.error('Get history error:', error);
     return NextResponse.json({ 
       success: false, 
-      error: error.message 
+      error: 'The request could not be completed.', code: 'INTERNAL_ERROR' 
     }, { status: 500 });
   }
 }
