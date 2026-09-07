@@ -87,7 +87,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json(
       {
         success: false,
-        error: error.message,
+        error: 'The request could not be completed.', code: 'INTERNAL_ERROR',
       },
       { status: 500 }
     );
@@ -202,7 +202,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json(
       {
         success: false,
-        error: error.message,
+        error: 'The request could not be completed.', code: 'INTERNAL_ERROR',
       },
       { status: 500 }
     );
