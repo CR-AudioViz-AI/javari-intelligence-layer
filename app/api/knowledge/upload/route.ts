@@ -1,3 +1,4 @@
+import { rateLimit } from '@/lib/api/rate-limit';
 // =====================================================
 // JAVARI KNOWLEDGE UPLOAD API
 // Created: November 18, 2025 - 10:50 PM EST
@@ -46,6 +47,9 @@ function chunkText(text: string, chunkSize: number = 500): string[] {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const limited = rateLimit(request);
+  if (limited) return limited;
+
   try {
     const contentType = request.headers.get('content-type');
     
