@@ -1,3 +1,4 @@
+import { rateLimit } from '@/lib/api/rate-limit';
 // =====================================================
 // JAVARI LEGAL COMPLIANCE API
 // Created: November 16, 2025 - 5:30 PM EST
@@ -376,6 +377,9 @@ async function saveCheckResults(
 // =====================================================
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const limited = rateLimit(request);
+  if (limited) return limited;
+
   try {
     const body: LegalCheckRequest = await request.json();
     
