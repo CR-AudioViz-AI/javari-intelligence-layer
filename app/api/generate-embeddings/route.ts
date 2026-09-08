@@ -1,3 +1,4 @@
+import { readBody } from '@/lib/api/body';
 /**
  * Javari AI - Phase 2 Intelligence Layer
  * API: Generate Embeddings
@@ -14,7 +15,9 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const body = await request.json().catch(() => ({}));
+    const parsed = await readBody<Record<string, unknown>>(request);
+    if (!parsed.ok) return parsed.response;
+    const body = parsed.body as any;=> ({}));
     const limit = body.limit || 1000;
     const regenerate = body.regenerate || false;
 
