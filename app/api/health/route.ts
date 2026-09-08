@@ -1,3 +1,4 @@
+import { rateLimit } from '@/lib/api/rate-limit';
 // app/api/health/route.ts
 //
 // 2026-08-30. Added across the fleet: 133 of 145 apps had NO health endpoint, so
@@ -27,7 +28,10 @@ import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const limited = rateLimit(request);
+  if (limited) return limited;
+
   const checks: Record<string, string> = {};
   const started = Date.now();
 
