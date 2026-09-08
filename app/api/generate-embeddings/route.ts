@@ -21,7 +21,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const parsed = await readBody<Record<string, unknown>>(request);
     if (!parsed.ok) return parsed.response;
-    const body = parsed.body as any;=> ({}));
+    const body = parsed.body as any;
     const limit = body.limit || 1000;
     const regenerate = body.regenerate || false;
 
