@@ -1,3 +1,4 @@
+import { rateLimit } from '@/lib/api/rate-limit';
 /**
  * Javari AI - Phase 2 Intelligence Layer
  * API: Analyze Query & Semantic Search
@@ -31,6 +32,9 @@ interface SearchRequest {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const limited = rateLimit(request);
+  if (limited) return limited;
+
   const startTime = Date.now();
 
   try {
