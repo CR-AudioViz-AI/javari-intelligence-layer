@@ -1,3 +1,4 @@
+import { rateLimit } from '@/lib/api/rate-limit';
 import { readBody } from '@/lib/api/body';
 /**
  * Javari AI - Phase 2 Intelligence Layer
@@ -14,6 +15,9 @@ export const maxDuration = 300; // 5 minutes max execution time
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const limited = rateLimit(request);
+  if (limited) return limited;
+
   try {
     const parsed = await readBody<Record<string, unknown>>(request);
     if (!parsed.ok) return parsed.response;
