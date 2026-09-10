@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "deploy": "vercel --prod",
-    "prebuild": "node scripts/audit-route-auth.mjs"
+    "prebuild": "node scripts/check-sdk-install.mjs && node scripts/audit-route-auth.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.38.4",
@@ -20,7 +20,7 @@
     "lucide-react": "^0.383.0",
     "openai": "^4.0.0",
     "rss-parser": "^3.13.0",
-    "@craudioviz/platform-sdk": "git+https://github.com/CR-AudioViz-AI/platform-sdk.git"
+    "@craudioviz/platform-sdk": "git+https://github.com/CR-AudioViz-AI/platform-sdk.git#31a7f6ddb0e3f79f7dbc5d16c83273221f872647"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

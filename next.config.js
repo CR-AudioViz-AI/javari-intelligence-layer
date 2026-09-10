@@ -1,3 +1,5 @@
+// 2026-09-10 factory: embed policy (frame-ancestors) comes from the platform SDK.
+const __embed = require('@craudioviz/platform-sdk/embed-headers.js');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // 2026-08-29: required for @craudioviz/platform-sdk. The SDK ships raw
@@ -31,9 +33,9 @@ const nextConfig = {
             // Backticks, not quotes: the policy contains 'self' and a single-quoted
             // JS string cannot hold it. The first version of this patch produced
             // 48 syntactically invalid configs, caught by parsing one before pushing.
-            { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
-            { key: 'Content-Security-Policy-Report-Only', value: `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://*.paypal.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.paypal.com; frame-src 'self' https://js.stripe.com https://*.paypal.com; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests` },
-          { key: 'X-Frame-Options', value: 'DENY' },
+            ...__embed.embedSecurityHeaders(),
+              { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+            { key: 'Content-Security-Policy-Report-Only', value: `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://*.paypal.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.paypal.com; frame-src 'self' https://js.stripe.com https://*.paypal.com; frame-ancestors 'self' https://craudiovizai.com https://www.craudiovizai.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests` },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
